@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>갈맷길 - 부산 걷기길</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="" crossorigin=""/>
+  <style>
+    :root{
+      --brand:#1e88c9;
+      --muted:#6b7c86;
+      --card:#f8fbfe;
+      --maxw:1100px;
+      font-family: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; color:#222; background:#fff; line-height:1.45; }
+    header{
+      position:sticky; top:0; z-index:40;
+      background:#fff; border-bottom:1px solid #e6eef6;
+    }
+    .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 16px; }
+    .top{
+      display:flex; align-items:center; justify-content:space-between; padding:16px 0;
+    }
+    .logo{ font-weight:800; color:var(--brand); font-size:20px; }
+    nav ul{ display:flex; gap:14px; margin:0; padding:0; list-style:none; align-items:center; }
+    nav a{ text-decoration:none; color:#334a57; font-weight:600; font-size:14px; }
+
+    /* Hero */
+    .hero{
+      display:grid;
+      grid-template-columns:1fr 460px;
+      gap:24px;
+      align-items:center;
+      padding:36px 16px;
+      background:linear-gradient(180deg,#e9f7ff 0%, #f7fbff 100%);
+    }
+    .hero .intro h1{ margin:0; font-size:30px; color:#0f4f76; }
+    .hero .intro p{ margin:12px 0 18px; color:var(--muted); }
+    .btn{
+      display:inline-block; background:var(--brand); color:#fff; padding:10px 16px; border-radius:999px; text-decoration:none; font-weight:700;
+    }
+    .hero .imgbox{
+      width:100%; border-radius:8px; overflow:hidden; box-shadow:0 8px 28px rgba(6,38,61,0.08);
+    }
+    .hero img{ display:block; width:100%; height:100%; object-fit:cover; }
+
+    /* Main sections */
+    section{ padding:32px 0; }
+    .title{ text-align:center; margin-bottom:20px; }
+    .title h2{ margin:0; font-size:22px; color:#123e57; }
+    .title p{ margin-top:8px; color:var(--muted); font-size:14px }
+
+    /* route cards */
+    .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .card{
+      background:var(--card); padding:18px; border-radius:8px; box-shadow:0 6px 16px rgba(12,40,60,0.04);
+    }
+    .card h3{ margin:0 0 8px 0; font-size:16px; color:#103a56; }
+    .card p{ margin:0 0 12px 0; color:var(--muted); font-size:13px; }
+    .chip{ display:inline-block; padding:6px 10px; border-radius:16px; font-weight:700; font-size:12px; color:#fff; }
+
+    /* colors roughly match map */
+    .c1{ background:#ff6b5b } /* 1코스 red */
+    .c2{ background:#f7b731 } /* 2코스 yellow */
+    .c3{ background:#ff8c42 } /* 3코스 orange */
+    .c4{ background:#e36adf } /* 4코스 pink */
+    .c5{ background:#6b5bd6 } /* 5코스 purple */
+    .c6{ background:#38c48f } /* 6코스 green */
+    .c7{ background:#b88f4a } /* 7코스 brown */
+    .c8{ background:#36b4a7 } /* 8코스 teal */
+    .c9{ background:#2f8fe2 } /* 9코스 blue */
+
+    /* Map area */
+    .map-area{ display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:start; }
+    #map{ height:520px; border-radius:8px; box-shadow:0 8px 30px rgba(6,38,61,0.08); }
+    .side-panel{ background:#fff; padding:14px; border-radius:8px; box-shadow:0 6px 18px rgba(10,30,40,0.04); }
+    .file-input{ display:flex; gap:8px; margin-bottom:12px; }
+    input[type=file]{ flex:1 }
+    .legend{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+
+    /* footer */
+    footer{ border-top:1px solid #eaf2f8; padding:20px 0; color:var(--muted); font-size:14px; }
+
+    /* responsive */
+    @media (max-width:1000px){
+      .hero{ grid-template-columns:1fr 320px }
+      .grid{ grid-template-columns:repeat(2,1fr) }
+      .map-area{ grid-template-columns:1fr; }
+    }
+    @media (max-width:560px){
+      .hero{ grid-template-columns:1fr; padding:24px 12px; gap:14px; }
+      nav ul{ display:none; }
+      .grid{ grid-template-columns:1fr; }
+      #map{ height:420px; }
+    }
+
+    /* small helper */
+    .muted{ color:var(--muted); font-size:13px }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wrap top">
+      <div class="logo">갈맷길</div>
+      <nav aria-label="주요메뉴">
+        <ul>
+          <li><a href="http://www.gobusan.kr/sub01/sub0101.php">소개</a></li>
+            <li><a href="https://www.busan.go.kr/galmaetgil/index"  target="_blank">소개 열기</a>
+          <li><a href="#routes">구간</a></li>
+          <li><a href="https://www.busan.go.kr/galmaetgil/walk0101">인증방법</a></li>
+          
+    
+        
+
+        <li><a href="https://www.busan.go.kr/galmaetgil/walk02">연락처</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero with image of the whole map -->
+  <section class="hero wrap" id="about">
+    <div class="intro">
+      <h1>부산 갈맷길 — 바다와 도시를 잇는 걷기길</h1>
+      <p>갈맷길 전체 노선 안내와 각 코스 정보, GPX 파일 업로드로 현재 위치/경로를 지도에서 바로 확인할 수 있습니다.</p>
+      <a class="btn" href="#map-section">지도에서 보기</a>
+      <p class="muted" style="margin-top:12px;">이미지는 전체 노선 지도. (출처: 갈맷길 안내도)</p>
+    </div>
+
+    <div class="imgbox" aria-hidden="true">
+      <!-- 로컬 이미지 파일명: 갈맷길.jpg -->
+      <img src="갈맷길.jpg" alt="갈맷길 전체 지도 이미지">
+    </div>
+  </section>
+
+  <!-- Routes summary -->
+  <section class="wrap" id="routes">
+    <div class="title"><h2>주요 코스 소개</h2><p>각 코스별 거리와 소요시간(참고)을 확인하세요.</p></div>
+
+    <div class="grid" role="list">
+      <div class="card" role="listitem">
+        <h3>1코스 (동해쪽)</h3>
+        <p>거리: 27.5km / 예상시간: 9시간</p>
+        <span class="chip c1">1코스</span>
+      </div>
+
+      <div class="card">
+        <h3>2코스</h3>
+        <p>거리: 23.4km / 예상시간: 8시간</p>
+        <span class="chip c2">2코스</span>
+      </div>
+
+      <div class="card">
+        <h3>3코스</h3>
+        <p>거리: 42.0km / 예상시간: 14시간</p>
+        <span class="chip c3">3코스</span>
+      </div>
+
+      <div class="card">
+        <h3>4코스</h3>
+        <p>거리: 36.7km / 예상시간: 12시간</p>
+        <span class="chip c4">4코스</span>
+      </div>
+
+      <div class="card">
+        <h3>5코스</h3>
+        <p>거리: 44.2km / 예상시간: 15시간</p>
+        <span class="chip c5">5코스</span>
+      </div>
+
+      <div class="card">
+        <h3>6코스</h3>
+        <p>거리: 44.9km / 예상시간: 13시간</p>
+        <span class="chip c6">6코스</span>
+      </div>
+
+      <div class="card">
+        <h3>7코스</h3>
+        <p>거리: 22.0km / 예상시간: 7시간</p>
+        <span class="chip c7">7코스</span>
+      </div>
+
+      <div class="card">
+        <h3>8코스 &amp; 9코스</h3>
+        <p>8코스: 18.3km / 6시간 · 9코스: 19.8km / 7시간</p>
+        <span class="chip c8">8코스</span>
+        <span class="chip c9" style="margin-left:8px">9코스</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive map + GPX upload -->
+  <section class="wrap" id="map-section">
+    <div class="title"><h2>인터랙티브 지도</h2><p>GPX 파일을 업로드하면 경로를 지도에 표시합니다. (여러 파일 업로드 가능)</p></div>
+
+    <div class="map-area">
+      <div id="map" aria-label="갈맷길 지도"></div>
+
+      <aside class="side-panel" aria-label="지도 컨트롤">
+        <div style="font-weight:800; margin-bottom:8px">GPX 업로드</div>
+        <div class="file-input">
+          <input id="gpxfiles" type="file" accept=".gpx" multiple />
+          <button id="clear" type="button">지우기</button>
+        </div>
+        <div class="muted">업로드한 파일 목록</div>
+        <ul id="filelist" style="padding-left:14px; margin-top:8px;"></ul>
+
+        <div style="margin-top:12px; font-weight:800;">범례 (코스 색상)</div>
+        <div class="legend">
+          <div><span class="chip c1" style="margin-right:8px"> </span> 1코스</div>
+          <div><span class="chip c2" style="margin-right:8px"> </span> 2코스</div>
+          <div><span class="chip c3" style="margin-right:8px"> </span> 3코스</div>
+          <div><span class="chip c4" style="margin-right:8px"> </span> 4코스</div>
+          <div><span class="chip c5" style="margin-right:8px"> </span> 5코스</div>
+          <div><span class="chip c6" style="margin-right:8px"> </span> 6코스</div>
+          <div><span class="chip c7" style="margin-right:8px"> </span> 7코스</div>
+          <div><span class="chip c8" style="margin-right:8px"> </span> 8코스</div>
+          <div><span class="chip c9" style="margin-right:8px"> </span> 9코스</div>
+        </div>
+
+        <div style="margin-top:12px; font-weight:700;">팁</div>
+        <div class="muted">GPX 파일을 드래그&드롭 혹은 파일 선택 후 업로드하세요. 업로드하면 경로가 지도에 표시됩니다.</div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="wrap" id="contact">
+    <div style="display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;">
+      <div>
+        <strong>갈맷길 안내</strong><br>
+        <small class="muted">Tel: 051-464-2030 · 부산시 관광안내</small>
+      </div>
+      <div class="muted">© 갈맷길 안내 · 디자인 예시</div>
+    </div>
+  </footer>
+
+  <!-- Leaflet & leaflet-gpx (for client-side GPX rendering) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/togeojson/1.1.0/togeojson.min.js"></script>
+  <!-- lightweight GPX loader helper (we'll parse with DOMParser + toGeoJSON) -->
+
+  <script>
+    // 초기 지도 세팅 (부산 중심을 기본 위치로 설정)
+    const map = L.map('map', {
+      center: [35.1796, 129.0756], // 부산 대략 중심
+      zoom: 11
+    });
+
+    // 기본 타일 (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // GPX 레이어 그룹
+    const gpxGroup = L.layerGroup().addTo(map);
+
+    // 코스 색상 배열 (코스 번호 순서대로)
+    const courseColors = ['#ff6b5b','#f7b731','#ff8c42','#e36adf','#6b5bd6','#38c48f','#b88f4a','#36b4a7','#2f8fe2'];
+
+    const fileInput = document.getElementById('gpxfiles');
+    const fileListEl = document.getElementById('filelist');
+    const clearBtn = document.getElementById('clear');
+
+    // 파일 업로드 핸들러
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      for (let i=0;i<files.length;i++){
+        const f = files[i];
+        const li = document.createElement('li');
+        li.textContent = f.name;
+        fileListEl.appendChild(li);
+
+        try {
+          const text = await f.text();
+          const parser = new DOMParser();
+          const gpxDoc = parser.parseFromString(text, 'application/xml');
+
+          // toGeoJSON 사용해 변환
+          const geojson = toGeoJSON.gpx(gpxDoc);
+
+          // 각 feature를 Leaflet에 추가 (LineString 기준)
+          const color = courseColors[i % courseColors.length];
+          const geoLayer = L.geoJSON(geojson, {
+            style: function(feature) {
+              return { color: color, weight: 5, opacity:0.9 };
+            },
+            onEachFeature: function(feature, layer) {
+              if (feature.properties && feature.properties.name) {
+                layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
+              }
+            }
+          }).addTo(gpxGroup);
+
+          // 지도의 범위를 업로드한 경로에 맞춤
+          try {
+            map.fitBounds(geoLayer.getBounds(), { padding: [30,30] });
+          } catch (err){ console.warn(err) }
+
+        } catch (err) {
+          const errLi = document.createElement('li');
+          errLi.textContent = '파일 읽기 실패: ' + f.name;
+          errLi.style.color = 'crimson';
+          fileListEl.appendChild(errLi);
+        }
+      }
+      // 파일 입력값 초기화(같은 파일 업로드 재시도 허용)
+      fileInput.value = '';
+    });
+
+    // 지우기 버튼: 레이어 제거 및 목록 초기화
+    clearBtn.addEventListener('click', () => {
+      gpxGroup.clearLayers();
+      fileListEl.innerHTML = '';
+    });
+
+    // (선택) 드래그 앤 드롭 파일 업로드 지원
+    const mapEl = document.getElementById('map');
+    ;['dragenter','dragover','dragleave','drop'].forEach(ev => {
+      mapEl.addEventListener(ev, e => e.preventDefault());
+    });
+    mapEl.addEventListener('drop', async (e) => {
+      const dt = e.dataTransfer;
+      if (!dt) return;
+      const files = Array.from(dt.files).filter(f=>f.name.toLowerCase().endsWith('.gpx'));
+      if (files.length === 0) return alert('GPX 파일을 드롭하세요.');
+      // reuse handler
+      const dataTransfer = { target: { files } };
+      // create a fake event object to reuse code is cumbersome; just process here:
+      for (let i=0;i<files.length;i++){
+        const f = files[i];
+        const li = document.createElement('li');
+        li.textContent = f.name;
+        fileListEl.appendChild(li);
+        try {
+          const text = await f.text();
+          const parser = new DOMParser();
+          const gpxDoc = parser.parseFromString(text, 'application/xml');
+          const geojson = toGeoJSON.gpx(gpxDoc);
+          const color = courseColors[i % courseColors.length];
+          const geoLayer = L.geoJSON(geojson, {
+            style: function(feature) {
+              return { color: color, weight: 5, opacity:0.9 };
+            }
+          }).addTo(gpxGroup);
+          try { map.fitBounds(geoLayer.getBounds(), { padding: [30,30] }); } catch {}
+        } catch (err){
+          const errLi = document.createElement('li');
+          errLi.textContent = '파일 읽기 실패: ' + f.name;
+          errLi.style.color = 'crimson';
+          fileListEl.appendChild(errLi);
+        }
+      }
+    });
+
+    // 예시: 미리 몇 개의 주요 POI 마커 추가 (원하면 더 추가 가능)
+    const pois = [
+      { name:'해운대', coords:[35.1587,129.1604] },
+      { name:'광안리', coords:[35.1538,129.1186] },
+      { name:'부산역', coords:[35.1151,129.0416] },
+      { name:'태종대', coords:[35.0826,129.0719] }
+    ];
+    pois.forEach(p=>{
+      L.marker(p.coords).addTo(map).bindPopup(`<strong>${p.name}</strong>`);
+    });
+
+    // 초기 뷰 박스: 부산 전체
+    map.setView([35.1796,129.0756], 11);
+
+  </script>
+</body>
+</html>
